@@ -2,8 +2,19 @@ pragma solidity ^0.4.17;
 
 contract ENC {
 
-	// Product owner - can add and delete products
-    address _owner;   
+    address _owner;
+
+    struct User {
+        string registration;
+        uint256 balance;
+        address walletAddress;
+    }
+
+    struct Provider {
+        uint256 id;
+        address walletAddress;
+        string type;
+    }
 
     struct LastAction {
     	string id_provider;
@@ -15,14 +26,24 @@ contract ENC {
     	address owner;
     }
 
-
     mapping(string => User) usersMap;
     mapping(string => Provider) providersMap;
     mapping(string => LastAction) lastActionsMap;
 
 
-    
-    
+    // #########################################################
+
+
+
+
+    function paymentToAccount(string registration, uint amount) payable {
+        require(usersMap[registration]); //should fail if userDoesn't exist
+
+
+        require(_products[productId].price <= msg.value);
+
+    }
+
 
 
 
