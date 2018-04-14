@@ -14,6 +14,7 @@ contract ENC {
         uint256 _id;
         address _walletAddress;
         bool _type_is_entry;
+        uint256 _balance;
     }
 
     struct LastAction {
@@ -36,7 +37,6 @@ contract ENC {
     string userCharged = "User has been charged";
     string userHasEntered = "User has entered";
 
-
     //-------------------------------------------------------
 
     function ENC() {
@@ -48,9 +48,9 @@ contract ENC {
     function registerUser(string registration) public returns (string) {
         require(bytes(usersMap[msg.sender]._registration).length == 0);
         usersMap[msg.sender] = User({
-            _registration: registration,
-            _balance: 0,
-            _walletAddress: msg.sender
+            _registration : registration,
+            _balance : 0,
+            _walletAddress : msg.sender
             });
         registrationToWallet[registration] = msg.sender;
         return userRegistered;
@@ -61,7 +61,7 @@ contract ENC {
         return usersMap[registrationToWallet[registration]]._registration;
     }
 
-    function getBalanceByRegistration(string registration)public returns (uint256){
+    function getBalanceByRegistration(string registration) public returns (uint256){
         require(msg.sender == _owner);
         return usersMap[registrationToWallet[registration]]._balance;
     }
@@ -75,8 +75,10 @@ contract ENC {
     }
 
     function addFundsToMyAccount(string registration) public payable returns (string) {
-        require(bytes(usersMap[msg.sender]._registration).length != 0); //should fail if userDoesn't exist
+        require(bytes(usersMap[msg.sender]._registration).length != 0);
+        //should fail if userDoesn't exist
         usersMap[msg.sender]._balance = usersMap[msg.sender]._balance + msg.value;
+        _owner.transfer(msg.value); //check this
         return accountHasBeenReplenished;
     }
 
@@ -86,9 +88,10 @@ contract ENC {
     function createProvider(uint256 id, address providerWallet, bool providerType) public returns (string)  {
         require(msg.sender == _owner);
         providersMap[id] = Provider({
-            _id: id,
-            _walletAddress: providerWallet,
-            _type_is_entry: providerType
+            _id : id,
+            _walletAddress : providerWallet,
+            _type_is_entry : providerType,
+            _balance: 0
             });
         return providerCreated;
     }
@@ -97,7 +100,8 @@ contract ENC {
 
     //Only called when on entry
     function logEntry(uint256 providerId, string registration) public returns (string){
-        require(registrationToWallet[registration] != 0); //should fail if userDoesn't exist
+        require(registrationToWallet[registration] != 0);
+        //should fail if userDoesn't exist
         require(lastActionsMap[registration]._entry == false);
         logAction(providerId, true, registration);
         return userHasEntered;
@@ -105,23 +109,23 @@ contract ENC {
 
     //Only called when on exit
     function logExitAndChargeUser(uint256 providerId, string registration, uint amount) public payable returns (string){
-        require(registrationToWallet[registration] != 0); //should fail if userDoesn't exist
+        require(providersMap[providerId]._walletAddress == msg.sender);
+        require(registrationToWallet[registration] != 0);
         require(lastActionsMap[registration]._entry == true);
         require(usersMap[registrationToWallet[registration]]._balance > amount);
         logAction(providerId, false, registration);
         usersMap[registrationToWallet[registration]]._balance = usersMap[registrationToWallet[registration]]._balance - amount;
-        providersMap[providerId]._walletAddress.transfer(amount);
+        providersMap[providerId]._balance = providersMap[providerId]._balance + amount;
         return userCharged;
     }
 
-    function logAction(uint256 providerId, bool entry, string registration) private{
+    function logAction(uint256 providerId, bool entry, string registration) private {
         lastActionsMap[registration] = LastAction({
-            _id_provider: providerId,
-            _entry: entry,
-            _registration: registration
+            _id_provider : providerId,
+            _entry : entry,
+            _registration : registration
             });
     }
-
 
 
 }
