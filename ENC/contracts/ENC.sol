@@ -3,15 +3,35 @@ pragma solidity ^0.4.17;
 contract ENC {
 
 	// Product owner - can add and delete products
-    address _owner;
-    
-    // Product description
-    struct Product {
-        string name;
-        uint256 price;
-        string ipfsImageHash;
+    address _owner;   
+
+    struct LastAction {
+    	string id_provider;
+    	bool entry_exit; // entry = 1; exit = 0 (?)
+    	string registration;
     }
+
+    struct Manager {
+    	address owner;
+    }
+
+
+    mapping(string => User) usersMap;
+    mapping(string => Provider) providersMap;
+    mapping(string => LastAction) lastActionsMap;
+
+
     
+    
+
+
+
+    // #########################################################
+
+
+
+
+
     mapping(uint256 => Product) _products;
     uint256 _numberOfProducts = 0;
     
