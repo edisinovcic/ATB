@@ -29,7 +29,7 @@ contract ENC {
     mapping(uint256 => Provider) providersMap;
     mapping(string => LastAction) lastActionsMap;
     mapping(string => address) registrationToWallet;
-    string userCreated = "Welcome! You have been created";
+    string userRegistered = "Welcome! You have been registered";
     string userDisabled = "You have been terminated!";
     string accountHasBeenReplenished = "You have successfully replenished your account";
     string providerCreated = "Provider has been created";
@@ -44,8 +44,8 @@ contract ENC {
     }
 
 
-    //returns user balance
-    function createUser(string registration) public returns (string) {
+    //can only be called by "guest" (user who has not registered yet)
+    function registerUser(string registration) public returns (string) {
         require(bytes(usersMap[msg.sender]._registration).length == 0);
         usersMap[msg.sender] = User({
             _registration: registration,
@@ -53,12 +53,17 @@ contract ENC {
             _walletAddress: msg.sender
             });
         registrationToWallet[registration] = msg.sender;
-        return userCreated;
+        return userRegistered;
     }
 
     function getUserByRegistration(string registration) public returns (string){
         require(msg.sender == _owner);
         return usersMap[registrationToWallet[registration]]._registration;
+    }
+
+    function getBalanceByRegistration(string registration)public returns (uint256){
+        require(msg.sender == _owner);
+        return usersMap[registrationToWallet[registration]]._balance;
     }
 
     function disableUser(string registration) public returns (string){
@@ -69,14 +74,15 @@ contract ENC {
         return userDisabled;
     }
 
-    function addFundsToAccount(string registration, uint amount) public payable returns (string) {
+    function addFundsToMyAccount(string registration) public payable returns (string) {
         require(bytes(usersMap[msg.sender]._registration).length != 0); //should fail if userDoesn't exist
-        usersMap[msg.sender]._balance = usersMap[msg.sender]._balance + amount;
+        usersMap[msg.sender]._balance = usersMap[msg.sender]._balance + msg.value;
         return accountHasBeenReplenished;
     }
 
     //--------------------------------------------------------
 
+    //providers can only be created by the owner
     function createProvider(uint256 id, address providerWallet, bool providerType) public returns (string)  {
         require(msg.sender == _owner);
         providersMap[id] = Provider({
@@ -98,11 +104,12 @@ contract ENC {
     }
 
     //Only called when on exit
-    function logExitAndChargeUser(string registration, uint amount, uint256 providerId) public payable returns (string){
+    function logExitAndChargeUser(uint256 providerId, string registration, uint amount) public payable returns (string){
         require(registrationToWallet[registration] != 0); //should fail if userDoesn't exist
         require(lastActionsMap[registration]._entry == true);
         require(usersMap[registrationToWallet[registration]]._balance > amount);
         logAction(providerId, false, registration);
+        usersMap[registrationToWallet[registration]]._balance = usersMap[registrationToWallet[registration]]._balance - amount;
         providersMap[providerId]._walletAddress.transfer(amount);
         return userCharged;
     }
