@@ -21,8 +21,15 @@ contract ENC {
     mapping(string => LastAction) lastActionsMap;
 
 
-    
-    
+
+    function userCreation(string registration) returns (uint) {
+    	require(usersMap[registration] == 0); // ???
+    	User newUser = User({})
+
+
+    }
+
+    function userUpdate(string registration) returns (string) {}
 
 
 
