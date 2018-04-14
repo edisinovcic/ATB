@@ -1,0 +1,9 @@
+{
+  "middleware": [],
+  "routes": {
+    "Homepage": {
+      "path": "/",
+      "page": "src/js/index.js"
+    }
+  }
+}

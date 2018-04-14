@@ -1,7 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import Web3 from 'web3'
-import './../css/index.css'
+import '../css/index.css'
+import './../dist/index.html'
 
 class App extends React.Component {
     constructor(props) {
@@ -201,6 +202,7 @@ class App extends React.Component {
     render() {
         return (
             <div className="main-container">
+                <h1>Doing something</h1>
                 this.state.result;
             </div>
         )
