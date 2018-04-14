@@ -5,134 +5,109 @@ contract ENC {
     address _owner;
 
     struct User {
-        string registration;
-        uint256 balance;
-        address walletAddress;
+        address _walletAddress;
+        string _registration;
+        uint256 _balance;
     }
 
     struct Provider {
-        uint256 id;
-        address walletAddress;
-        string type;
+        uint256 _id;
+        address _walletAddress;
+        string _type;
     }
 
     struct LastAction {
-    	string id_provider;
-    	bool entry_exit; // entry = 1; exit = 0 (?)
-    	string registration;
+        uint256 _id_provider;
+        bool _entry; // entry = true; exit = false
+        string _registration;
     }
 
-    struct Manager {
-    	address owner;
-    }
 
-    mapping(string => User) usersMap;
-    mapping(string => Provider) providersMap;
+    //-------------------------------------------------------
+
+    mapping(address => User) usersMap;
+    mapping(uint256 => Provider) providersMap;
     mapping(string => LastAction) lastActionsMap;
+    mapping(string => address) registrationToWallet;
+    string userCreated = "Welcome! You have been created";
+    string userDisabled = "You have been terminated!";
+    string accountHasBeenReplenished = "You have successfully replenished your account";
+    string providerCreated = "Provider has been created";
+    string userCharged = "User has been charged";
+    string userHasEntered = "User has entered";
 
 
-<<<<<<< HEAD
+    //-------------------------------------------------------
 
-    function userCreation(string registration) returns (uint) {
-    	require(usersMap[registration] == 0); // ???
-    	User newUser = User({})
-
-
-    }
-
-    function userUpdate(string registration) returns (string) {}
-=======
-    // #########################################################
-
-
-
-
-    function paymentToAccount(string registration, uint amount) payable {
-        require(usersMap[registration]); //should fail if userDoesn't exist
-
-
-        require(_products[productId].price <= msg.value);
-
-    }
-
->>>>>>> fb998b3573e150c50ab32bad88d91e237b242fba
-
-
-
-    // #########################################################
-
-
-
-
-
-    mapping(uint256 => Product) _products;
-    uint256 _numberOfProducts = 0;
-    
-    function HUBShop() {
+    function ENC() {
         _owner = msg.sender;
     }
-    
-    
-    function () payable {
-        throw;
-    }
-    
-    function addProduct(string name, 
-                        uint256 price, 
-                        string ipfsImageHash)
-                        returns (uint256) 
-    {
-        //require(msg.sender == _owner);
-        _numberOfProducts += 1;
-        _products[_numberOfProducts] = Product({
-            name: name,
-            price: price,
-            ipfsImageHash: ipfsImageHash
-        });
-        return _numberOfProducts;
-    }
-    
-    function getProduct(uint256 productId)
-                        constant 
-                        returns (string) 
-    {
-        require(_products[productId].price != 0);
-        return _products[productId].name;
-    }
-    
-    function deleteProduct(uint256 productId)
-                        returns (uint256) 
-    {
-        // require(msg.sender == _owner);
-        require(_products[productId].price != 0);
-        _products[productId] = Product({
-            name: "",
-            price: 0,
-            ipfsImageHash: ""
-        });
-        return productId;
-    }
-    
-    function getPrice(uint256 productId) constant returns (uint256) {
-        return _products[productId].price;
+
+
+    //returns user balance
+    function userRegistration(string registration) public returns (string) {
+        require(bytes(usersMap[msg.sender]._registration).length != 0);
+        usersMap[msg.sender] = User({
+            _registration: registration,
+            _balance: 0,
+            _walletAddress: msg.sender
+            });
+        registrationToWallet[registration] = msg.sender;
+        return userCreated;
     }
 
-    function getIPFSHash(uint256 productId) constant returns (string) {
-        return _products[productId].ipfsImageHash;
-    } 
-    
-    function buyProduct(uint256 productId)
-                payable 
-    {
-    
-        require(_products[productId].price <= msg.value);
-        this.transfer(msg.value);
+    function userDisable(string registration) public returns (string){
+        require(usersMap[msg.sender]._walletAddress == msg.sender);
+        usersMap[msg.sender]._registration = "";
+        usersMap[msg.sender]._walletAddress = 0;
+        registrationToWallet[registration] = 0;
+        return userDisabled;
     }
-    
-    function pullFunds(address recipient, uint256 amount)
-                            payable 
-    {
-        recipient.send(amount);
+
+    function paymentToAccount(string registration, uint amount) public payable returns (string) {
+        require(bytes(usersMap[msg.sender]._registration).length != 0); //should fail if userDoesn't exist
+        usersMap[msg.sender]._balance = usersMap[msg.sender]._balance + amount;
+        return accountHasBeenReplenished;
+    }
+
+    //--------------------------------------------------------
+
+    function providerCreation(uint256 id, address providerWallet, string providerType) public returns (string)  {
+        require(msg.sender == _owner);
+        providersMap[id] = Provider({
+            _id: id,
+            _walletAddress: providerWallet,
+            _type: providerType
+            });
+        return providerCreated;
+    }
+
+    //---------------------------------------------------------
+
+    //Only called when on entry
+    function logEntry(uint256 providerId, string registration) public returns (string){
+        require(registrationToWallet[registration] != 0); //should fail if userDoesn't exist
+        require(lastActionsMap[registration]._entry == false);
+        logAction(providerId, true, registration);
+        return userHasEntered;
+    }
+
+    //Only called when on exit
+    function chargeUser(string registration, uint amount, uint256 providerId) public payable returns (string){
+        require(registrationToWallet[registration] != 0); //should fail if userDoesn't exist
+        require(lastActionsMap[registration]._entry == true);
+        require(usersMap[registrationToWallet[registration]]._balance > amount);
+        logAction(providerId, false, registration);
+        providersMap[providerId]._walletAddress.transfer(amount);
+        return userCharged;
+    }
+
+    function logAction(uint256 providerId, bool entry, string registration) public{
+        lastActionsMap[registration] = LastAction({
+            _id_provider: providerId,
+            _entry: entry,
+            _registration: registration
+            });
     }
 
 }
